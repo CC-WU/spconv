@@ -1,146 +1,76 @@
-
-//  (C) Copyright John maddock 1999. 
-//  (C) David Abrahams 2002.  Distributed under the Boost
-//  Software License, Version 1.0. (See accompanying file
-//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// Boost.Units - A C++ library for zero-overhead dimensional analysis and 
+// unit/quantity manipulation and conversion
 //
-// use this header as a workaround for missing <limits>
+// Copyright (C) 2003-2008 Matthias Christian Schabel
+// Copyright (C) 2007-2008 Steven Watanabe
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 
-//  See http://www.boost.org/libs/compatibility/index.html for documentation.
+#ifndef BOOST_UNITS_LIMITS_HPP
+#define BOOST_UNITS_LIMITS_HPP
 
-#ifndef BOOST_LIMITS
-#define BOOST_LIMITS
+///
+/// \file
+/// \brief specialize std::numeric_limits for units.
+///
+
+#include <limits>
 
 #include <boost/config.hpp>
+#include <boost/units/units_fwd.hpp>
 
-#ifdef BOOST_NO_LIMITS
-#  error "There is no std::numeric_limits suppport available."
-#else
-# include <limits>
-#endif
+namespace std {
 
-#if (defined(BOOST_HAS_LONG_LONG) && defined(BOOST_NO_LONG_LONG_NUMERIC_LIMITS)) \
-      || (defined(BOOST_HAS_MS_INT64) && defined(BOOST_NO_MS_INT64_NUMERIC_LIMITS))
-// Add missing specializations for numeric_limits:
-#ifdef BOOST_HAS_MS_INT64
-#  define BOOST_LLT __int64
-#  define BOOST_ULLT unsigned __int64
-#else
-#  define BOOST_LLT  ::boost::long_long_type
-#  define BOOST_ULLT  ::boost::ulong_long_type
-#endif
-
-#include <climits>  // for CHAR_BIT
-
-namespace std
+template<class Unit, class T>
+class numeric_limits< ::boost::units::quantity<Unit, T> >
 {
-  template<>
-  class numeric_limits<BOOST_LLT> 
-  {
-   public:
-
-      BOOST_STATIC_CONSTANT(bool, is_specialized = true);
-#ifdef BOOST_HAS_MS_INT64
-      static BOOST_LLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return 0x8000000000000000i64; }
-      static BOOST_LLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return 0x7FFFFFFFFFFFFFFFi64; }
-#elif defined(LLONG_MAX)
-      static BOOST_LLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return LLONG_MIN; }
-      static BOOST_LLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return LLONG_MAX; }
-#elif defined(LONGLONG_MAX)
-      static BOOST_LLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return LONGLONG_MIN; }
-      static BOOST_LLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return LONGLONG_MAX; }
-#else
-      static BOOST_LLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return 1LL << (sizeof(BOOST_LLT) * CHAR_BIT - 1); }
-      static BOOST_LLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return ~(min)(); }
+    public:
+        typedef ::boost::units::quantity<Unit, T> quantity_type;
+        BOOST_STATIC_CONSTEXPR bool is_specialized = std::numeric_limits<T>::is_specialized;
+        static BOOST_CONSTEXPR quantity_type (min)() { return(quantity_type::from_value((std::numeric_limits<T>::min)())); }
+        static BOOST_CONSTEXPR quantity_type (max)() { return(quantity_type::from_value((std::numeric_limits<T>::max)())); }
+#ifndef BOOST_NO_CXX11_NUMERIC_LIMITS
+        static BOOST_CONSTEXPR quantity_type (lowest)() { return(quantity_type::from_value((std::numeric_limits<T>::lowest)())); }
 #endif
-      BOOST_STATIC_CONSTANT(int, digits = sizeof(BOOST_LLT) * CHAR_BIT -1);
-      BOOST_STATIC_CONSTANT(int, digits10 = (CHAR_BIT * sizeof (BOOST_LLT) - 1) * 301L / 1000);
-      BOOST_STATIC_CONSTANT(bool, is_signed = true);
-      BOOST_STATIC_CONSTANT(bool, is_integer = true);
-      BOOST_STATIC_CONSTANT(bool, is_exact = true);
-      BOOST_STATIC_CONSTANT(int, radix = 2);
-      static BOOST_LLT epsilon() throw() { return 0; };
-      static BOOST_LLT round_error() throw() { return 0; };
-
-      BOOST_STATIC_CONSTANT(int, min_exponent = 0);
-      BOOST_STATIC_CONSTANT(int, min_exponent10 = 0);
-      BOOST_STATIC_CONSTANT(int, max_exponent = 0);
-      BOOST_STATIC_CONSTANT(int, max_exponent10 = 0);
-
-      BOOST_STATIC_CONSTANT(bool, has_infinity = false);
-      BOOST_STATIC_CONSTANT(bool, has_quiet_NaN = false);
-      BOOST_STATIC_CONSTANT(bool, has_signaling_NaN = false);
-      BOOST_STATIC_CONSTANT(bool, has_denorm = false);
-      BOOST_STATIC_CONSTANT(bool, has_denorm_loss = false);
-      static BOOST_LLT infinity() throw() { return 0; };
-      static BOOST_LLT quiet_NaN() throw() { return 0; };
-      static BOOST_LLT signaling_NaN() throw() { return 0; };
-      static BOOST_LLT denorm_min() throw() { return 0; };
-
-      BOOST_STATIC_CONSTANT(bool, is_iec559 = false);
-      BOOST_STATIC_CONSTANT(bool, is_bounded = true);
-      BOOST_STATIC_CONSTANT(bool, is_modulo = true);
-
-      BOOST_STATIC_CONSTANT(bool, traps = false);
-      BOOST_STATIC_CONSTANT(bool, tinyness_before = false);
-      BOOST_STATIC_CONSTANT(float_round_style, round_style = round_toward_zero);
-      
-  };
-
-  template<>
-  class numeric_limits<BOOST_ULLT> 
-  {
-   public:
-
-      BOOST_STATIC_CONSTANT(bool, is_specialized = true);
-#ifdef BOOST_HAS_MS_INT64
-      static BOOST_ULLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return 0ui64; }
-      static BOOST_ULLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return 0xFFFFFFFFFFFFFFFFui64; }
-#elif defined(ULLONG_MAX) && defined(ULLONG_MIN)
-      static BOOST_ULLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return ULLONG_MIN; }
-      static BOOST_ULLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return ULLONG_MAX; }
-#elif defined(ULONGLONG_MAX) && defined(ULONGLONG_MIN)
-      static BOOST_ULLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return ULONGLONG_MIN; }
-      static BOOST_ULLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return ULONGLONG_MAX; }
-#else
-      static BOOST_ULLT min BOOST_PREVENT_MACRO_SUBSTITUTION (){ return 0uLL; }
-      static BOOST_ULLT max BOOST_PREVENT_MACRO_SUBSTITUTION (){ return ~0uLL; }
+        BOOST_STATIC_CONSTEXPR int digits = std::numeric_limits<T>::digits;
+        BOOST_STATIC_CONSTEXPR int digits10 = std::numeric_limits<T>::digits10;
+#ifndef BOOST_NO_CXX11_NUMERIC_LIMITS
+        BOOST_STATIC_CONSTEXPR int max_digits10 = std::numeric_limits<T>::max_digits10;
 #endif
-      BOOST_STATIC_CONSTANT(int, digits = sizeof(BOOST_LLT) * CHAR_BIT);
-      BOOST_STATIC_CONSTANT(int, digits10 = (CHAR_BIT * sizeof (BOOST_LLT)) * 301L / 1000);
-      BOOST_STATIC_CONSTANT(bool, is_signed = false);
-      BOOST_STATIC_CONSTANT(bool, is_integer = true);
-      BOOST_STATIC_CONSTANT(bool, is_exact = true);
-      BOOST_STATIC_CONSTANT(int, radix = 2);
-      static BOOST_ULLT epsilon() throw() { return 0; };
-      static BOOST_ULLT round_error() throw() { return 0; };
+        BOOST_STATIC_CONSTEXPR bool is_signed = std::numeric_limits<T>::is_signed;
+        BOOST_STATIC_CONSTEXPR bool is_integer = std::numeric_limits<T>::is_integer;
+        BOOST_STATIC_CONSTEXPR bool is_exact = std::numeric_limits<T>::is_exact;
+        BOOST_STATIC_CONSTEXPR int radix = std::numeric_limits<T>::radix;
+        static BOOST_CONSTEXPR quantity_type epsilon()  { return(quantity_type::from_value(std::numeric_limits<T>::epsilon())); }
+        static BOOST_CONSTEXPR quantity_type round_error()  { return(quantity_type::from_value(std::numeric_limits<T>::round_error())); }
+        BOOST_STATIC_CONSTEXPR int min_exponent = std::numeric_limits<T>::min_exponent;
+        BOOST_STATIC_CONSTEXPR int min_exponent10 = std::numeric_limits<T>::min_exponent10;
+        BOOST_STATIC_CONSTEXPR int max_exponent = std::numeric_limits<T>::max_exponent;
+        BOOST_STATIC_CONSTEXPR int max_exponent10 = std::numeric_limits<T>::max_exponent10;
+        BOOST_STATIC_CONSTEXPR bool has_infinity = std::numeric_limits<T>::has_infinity;
+        BOOST_STATIC_CONSTEXPR bool has_quiet_NaN = std::numeric_limits<T>::has_quiet_NaN;
+        BOOST_STATIC_CONSTEXPR bool has_signaling_NaN = std::numeric_limits<T>::has_signaling_NaN;
+        BOOST_STATIC_CONSTEXPR bool has_denorm_loss = std::numeric_limits<T>::has_denorm_loss;
+        static BOOST_CONSTEXPR quantity_type infinity()  { return(quantity_type::from_value(std::numeric_limits<T>::infinity())); }
+        static BOOST_CONSTEXPR quantity_type quiet_NaN()  { return(quantity_type::from_value(std::numeric_limits<T>::quiet_NaN())); }
+        static BOOST_CONSTEXPR quantity_type signaling_NaN()  { return(quantity_type::from_value(std::numeric_limits<T>::signaling_NaN())); }
+        static BOOST_CONSTEXPR quantity_type denorm_min()  { return(quantity_type::from_value(std::numeric_limits<T>::denorm_min())); }
+        BOOST_STATIC_CONSTEXPR bool is_iec559 = std::numeric_limits<T>::is_iec559;
+        BOOST_STATIC_CONSTEXPR bool is_bounded = std::numeric_limits<T>::is_bounded;
+        BOOST_STATIC_CONSTEXPR bool is_modulo = std::numeric_limits<T>::is_modulo;
+        BOOST_STATIC_CONSTEXPR bool traps = std::numeric_limits<T>::traps;
+        BOOST_STATIC_CONSTEXPR bool tinyness_before = std::numeric_limits<T>::tinyness_before;
+#if defined(_STLP_STATIC_CONST_INIT_BUG)
+        BOOST_STATIC_CONSTEXPR int has_denorm = std::numeric_limits<T>::has_denorm;
+        BOOST_STATIC_CONSTEXPR int round_style = std::numeric_limits<T>::round_style;
+#else
+        BOOST_STATIC_CONSTEXPR float_denorm_style has_denorm = std::numeric_limits<T>::has_denorm;
+        BOOST_STATIC_CONSTEXPR float_round_style round_style = std::numeric_limits<T>::round_style;
+#endif
+};
 
-      BOOST_STATIC_CONSTANT(int, min_exponent = 0);
-      BOOST_STATIC_CONSTANT(int, min_exponent10 = 0);
-      BOOST_STATIC_CONSTANT(int, max_exponent = 0);
-      BOOST_STATIC_CONSTANT(int, max_exponent10 = 0);
-
-      BOOST_STATIC_CONSTANT(bool, has_infinity = false);
-      BOOST_STATIC_CONSTANT(bool, has_quiet_NaN = false);
-      BOOST_STATIC_CONSTANT(bool, has_signaling_NaN = false);
-      BOOST_STATIC_CONSTANT(bool, has_denorm = false);
-      BOOST_STATIC_CONSTANT(bool, has_denorm_loss = false);
-      static BOOST_ULLT infinity() throw() { return 0; };
-      static BOOST_ULLT quiet_NaN() throw() { return 0; };
-      static BOOST_ULLT signaling_NaN() throw() { return 0; };
-      static BOOST_ULLT denorm_min() throw() { return 0; };
-
-      BOOST_STATIC_CONSTANT(bool, is_iec559 = false);
-      BOOST_STATIC_CONSTANT(bool, is_bounded = true);
-      BOOST_STATIC_CONSTANT(bool, is_modulo = true);
-
-      BOOST_STATIC_CONSTANT(bool, traps = false);
-      BOOST_STATIC_CONSTANT(bool, tinyness_before = false);
-      BOOST_STATIC_CONSTANT(float_round_style, round_style = round_toward_zero);
-      
-  };
 }
-#endif 
 
-#endif
-
+#endif // BOOST_UNITS_LIMITS_HPP
